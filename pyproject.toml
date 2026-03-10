@@ -1,0 +1,18 @@
+[project]
+name = "cafe-order-processor"
+version = "0.1.0"
+description = "CLI to convert natural-language cafe orders to JSON via OpenAI"
+requires-python = ">=3.10"
+
+[tool.black]
+line-length = 120
+target-version = ["py310", "py311", "py312", "py313"]
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+line_length = 120
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

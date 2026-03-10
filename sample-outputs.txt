@@ -1,0 +1,163 @@
+(venv) maugus@Ahans-MacBook-Air workshop-pe % python cafe_order_processor.py
+
+   ☕ Cafe Order Processing System
+   ═══════════════════════════════
+   Type your order in natural language. Type 'quit' or 'exit' to stop.
+
+   🛒 Your order: 2x Americano, 1 large fries and 3 hamburger    
+
+Order summary:
+  2x Americano (regular)
+  1x Fries (large)
+  3x Hamburger (regular)
+  Total items: 6
+
+JSON:
+{
+  "items": [
+    {
+      "name": "Americano",
+      "quantity": 2,
+      "size": "regular",
+      "modifiers": []
+    },
+    {
+      "name": "Fries",
+      "quantity": 1,
+      "size": "large",
+      "modifiers": []
+    },
+    {
+      "name": "Hamburger",
+      "quantity": 3,
+      "size": "regular",
+      "modifiers": []
+    }
+  ],
+  "special_instructions": "",
+  "total_items": 6
+}
+
+   🛒 Your order: I'll have a cappuccino and two croissants please
+
+Order summary:
+  1x Cappuccino (regular)
+  2x Croissant (regular)
+  Total items: 3
+
+JSON:
+{
+  "items": [
+    {
+      "name": "Cappuccino",
+      "quantity": 1,
+      "size": "regular",
+      "modifiers": []
+    },
+    {
+      "name": "Croissant",
+      "quantity": 2,
+      "size": "regular",
+      "modifiers": []
+    }
+  ],
+  "special_instructions": "",
+  "total_items": 3
+}
+
+   🛒 Your order: Can I get three iced lattes, make one of them decaf    
+
+Order summary:
+  2x Iced Latte (regular) [iced]
+  1x Iced Latte (regular) [iced, decaf]
+  Total items: 3
+
+JSON:
+{
+  "items": [
+    {
+      "name": "Iced Latte",
+      "quantity": 2,
+      "size": "regular",
+      "modifiers": [
+        "iced"
+      ]
+    },
+    {
+      "name": "Iced Latte",
+      "quantity": 1,
+      "size": "regular",
+      "modifiers": [
+        "iced",
+        "decaf"
+      ]
+    }
+  ],
+  "special_instructions": "",
+  "total_items": 3
+}
+
+   🛒 Your order: One burger meal with coke, and an extra order of fries    
+
+Order summary:
+  1x Hamburger (regular)
+  1x Fries (regular)
+  1x Coke (regular)
+  1x Fries (regular)
+  Total items: 4
+
+JSON:
+{
+  "items": [
+    {
+      "name": "Hamburger",
+      "quantity": 1,
+      "size": "regular",
+      "modifiers": []
+    },
+    {
+      "name": "Fries",
+      "quantity": 1,
+      "size": "regular",
+      "modifiers": []
+    },
+    {
+      "name": "Coke",
+      "quantity": 1,
+      "size": "regular",
+      "modifiers": []
+    },
+    {
+      "name": "Fries",
+      "quantity": 1,
+      "size": "regular",
+      "modifiers": []
+    }
+  ],
+  "special_instructions": "",
+  "total_items": 4
+}
+
+   🛒 Your order: just one chicken burger pls bro yo
+
+Order summary:
+  1x Chicken Burger (regular)
+  Total items: 1
+
+JSON:
+{
+  "items": [
+    {
+      "name": "Chicken Burger",
+      "quantity": 1,
+      "size": "regular",
+      "modifiers": []
+    }
+  ],
+  "special_instructions": "",
+  "total_items": 1
+}
+
+   🛒 Your order: exit
+   Goodbye.
+(venv) maugus@Ahans-MacBook-Air workshop-pe % 

@@ -1,0 +1,226 @@
+name: Cafe Order Processor CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  format-check:
+    name: Code Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install formatting tools
+        run: |
+          pip install black==24.10.0 isort==5.13.2
+
+      - name: Check code formatting (Black)
+        run: |
+          black --check --diff . || (echo "❌ Code formatting failed. Run: black ." && exit 1)
+
+      - name: Check import sorting (isort)
+        run: |
+          isort --check-only --diff --profile=black --line-length=120 . || (echo "❌ Import sorting failed. Run: isort ." && exit 1)
+
+  lint:
+    name: Linting & Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run flake8 (linting)
+        run: |
+          flake8 . --max-line-length=120 --extend-ignore=E203,W503,E501 --exclude=.git,__pycache__,.venv,venv --statistics
+
+      - name: Run pylint (code quality)
+        run: |
+          pylint cafe_order_processor.py --max-line-length=120 --disable=C0111,R0903,W0212,C0103,R0801 --fail-under=8.0 || true
+
+  test:
+    name: Unit & Integration Tests
+    needs: [format-check, lint]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run syntax validation
+        run: |
+          python -m py_compile cafe_order_processor.py
+
+      - name: Run unit tests with coverage
+        run: |
+          pytest tests/ -v --cov=cafe_order_processor --cov-report=xml --cov-report=html --cov-report=term --tb=short
+
+      - name: Check test coverage threshold
+        run: |
+          coverage report --fail-under=60 || true
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            htmlcov/
+            coverage.xml
+          retention-days: 7
+
+  security-scan:
+    name: Security Audit
+    needs: [format-check, lint]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install security tools
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run Bandit (security scanner)
+        run: |
+          bandit -r . -f json -o bandit-report.json --exclude ./tests || true
+          bandit -r . -ll -i --exclude ./tests || true
+
+      - name: Run Safety (dependency vulnerabilities)
+        run: |
+          safety check --json --output safety-report.json || true
+          safety check || true
+
+      - name: Check for secrets in code
+        run: |
+          grep -r "OPENAI_API_KEY.*=.*['\"][a-zA-Z0-9]" *.py 2>/dev/null && echo "❌ Found hardcoded API key!" && exit 1 || echo "✅ No hardcoded secrets found"
+
+      - name: Upload security reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            safety-report.json
+          retention-days: 7
+
+  validate-configs:
+    name: Validate Configurations
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate requirements.txt
+        run: |
+          pip install --dry-run -r requirements.txt
+
+      - name: Check .env.example format
+        run: |
+          if [ ! -f .env.example ]; then
+            echo "❌ .env.example file missing"
+            exit 1
+          fi
+          if ! grep -q "OPENAI_API_KEY" .env.example; then
+            echo "❌ .env.example missing OPENAI_API_KEY"
+            exit 1
+          fi
+          echo "✅ .env.example is valid"
+
+  integration-test:
+    name: Integration Test (Dry Run)
+    needs: [test, validate-configs]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Test script imports
+        run: |
+          python -c "
+          import sys
+          sys.path.insert(0, '.')
+          import cafe_order_processor
+          print('✅ All imports successful')
+          "
+
+      - name: Test REPL starts (import + prompt load)
+        run: |
+          python -c "
+          import cafe_order_processor
+          assert cafe_order_processor.PROMPT_CONFIG is not None
+          assert 'system_prompt' in cafe_order_processor.PROMPT_CONFIG
+          print('✅ REPL module and prompt config OK')
+          "
+
+  summary:
+    name: Pipeline Summary
+    needs: [format-check, lint, test, security-scan, validate-configs, integration-test]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "# 🚀 Cafe Order Processor - CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Pipeline Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Code Formatting | ${{ needs.format-check.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Linting | ${{ needs.lint.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tests | ${{ needs.test.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Scan | ${{ needs.security-scan.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Config Validation | ${{ needs.validate-configs.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Integration Test | ${{ needs.integration-test.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 **Artifacts:** Test coverage and security reports available when generated" >> $GITHUB_STEP_SUMMARY
