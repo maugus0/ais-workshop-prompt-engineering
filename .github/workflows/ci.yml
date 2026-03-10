@@ -173,6 +173,8 @@ jobs:
     name: Integration Test (Dry Run)
     needs: [test, validate-configs]
     runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: "sk-test-dummy"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
