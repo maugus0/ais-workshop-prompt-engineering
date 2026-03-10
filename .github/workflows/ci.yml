@@ -80,6 +80,8 @@ jobs:
           python -m py_compile cafe_order_processor.py
 
       - name: Run unit tests with coverage
+        env:
+          OPENAI_API_KEY: "sk-test-dummy"
         run: |
           pytest tests/ -v --cov=cafe_order_processor --cov-report=xml --cov-report=html --cov-report=term --tb=short
 

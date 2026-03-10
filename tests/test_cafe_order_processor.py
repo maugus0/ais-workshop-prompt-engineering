@@ -1,8 +1,12 @@
 """Unit tests for cafe_order_processor (no API key required; mocks OpenAI)."""
 
+import os
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+# Allow module import when no real API key is set (CI or local pytest without .env)
+os.environ.setdefault("OPENAI_API_KEY", "sk-test-dummy")
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cafe_order_processor import load_prompt_config, process_order, strip_json_fences  # noqa: E402
