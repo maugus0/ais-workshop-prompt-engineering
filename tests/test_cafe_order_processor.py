@@ -5,11 +5,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from cafe_order_processor import (  # noqa: E402
-    load_prompt_config,
-    process_order,
-    strip_json_fences,
-)
+from cafe_order_processor import load_prompt_config, process_order, strip_json_fences  # noqa: E402
 
 
 def test_load_prompt_config_structure():

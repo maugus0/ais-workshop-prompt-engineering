@@ -72,13 +72,13 @@ else
     exit 1
 fi
 
-# 2. Import sorting check
+# 2. Import sorting check (same options as CI: profile=black, line-length=120)
 echo ""
 echo "2️⃣  Checking import sorting (isort)..."
-if isort --check-only --profile=black --line-length=120 . > /dev/null 2>&1; then
+if isort --check-only --diff --profile=black --line-length=120 . 2>&1; then
     success "Imports are properly sorted"
 else
-    error "Import sorting failed. Run: isort ."
+    error "Import sorting failed. Run: isort --profile=black --line-length=120 ."
     exit 1
 fi
 
